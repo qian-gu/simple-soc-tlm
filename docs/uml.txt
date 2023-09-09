@@ -1,0 +1,125 @@
+@startuml
+interface DirectIF << sc_interface >> {
+  + {abstract} bool DirectRead()
+  + {abstract} bool DirectWrite()
+}
+interface BlockingIF << sc_interface >> {
+  + {abstract} Status BurstRead()
+  + {abstract} Status BurstWrite()
+}
+interface NonBlockingIF << sc_interface >> {
+  + {abstract} void Read()
+  + {abstract} void Write()
+}
+class MasterDirect << sc_module >> {
+}
+class MasterBlocking << sc_module >> {
+}
+class MasterNonBlocking << sc_module >> {
+}
+interface SlaveIF << sc_interface >> {
+  + {abstract} Status Read()
+  + {abstract} Status Write()
+  + {abstract} unsigned GetStartAddress()
+  + {abstract} unsigned GetEndAddress()
+}
+class FastMem << sc_prim_channel >> {
+  - int *mem_
+  - unsigned start_address_
+  - unsigend end_address_
+}
+class SlowMem << sc_channel >> {
+  - int *mem_
+  - unsigned start_address_
+  - unsigned end_address_
+  - unsigned response_cycle_
+  - unsigned wait_count_
+  ---
+  .. SC_METHOD ..
+  + void WaitLoop()
+}
+class UART << sc_channel >> {
+  .. rx ..
+  + sc_in<bool> rx_valid
+  + sc_in<bool> rx_data
+  .. tx ..
+  + sc_out<bool> tx_valid
+  + sc_out<bool> tx_data
+  ..
+  - UARTLogic *uart_logic
+  - sc_fifo<int8_t> *rxfifo
+  - sc_fifo<int8_t> *txfifo
+}
+class UARTLogic << sc_channel >> {
+  .. rx ..
+  + sc_in<bool> rx_valid
+  + sc_in<bool> rx_data
+  + sc_port<sc_fifo_in_if<int8_t> > rxfifo_read_port
+  + sc_port<sc_fifo_out_if<int8_t> > rxfifo_write_port
+  .. tx ..
+  + sc_out<bool> tx_valid
+  + sc_out<bool> tx_data
+  + sc_port<sc_fifo_in_if<int8_t> > txfifo_read_port
+  + sc_port<sc_fifo_out_if<int8_t> > txfifo_write_port
+  - unsigned start_address_
+  - unsigned end_address_
+  - int8_t status_
+  - int8_t configure_
+  --
+  .. SC_THREAD ..
+  + void ReceiveThread()
+  + void TransmitThread()
+}
+interface ArbiterIF << sc_interface >> {
+  + {abstract} Request *Arbitrate(Request requests[])
+}
+class Arbiter << sc_prim_channel >> {
+}
+class Bus << sc_channel >> {
+  - SlaveIF *GetSlave()
+  - Request *GetNextRequest()
+  - void HandleRequest()
+  - Status BurstOperation()
+  - void NonBlockingOperation()
+  - Request requests_[kPriorityNum]
+  - Request *current_request_
+}
+MasterDirect ..> DirectIF
+MasterNonBlocking ..> NonBlockingIF
+MasterBlocking ..> BlockingIF
+class Bus implements DirectIF
+class Bus implements NonBlockingIF
+class Bus implements BlockingIF
+class Arbiter implements ArbiterIF
+Bus ..> SlaveIF
+Bus ..> ArbiterIF
+interface SlaveIF extends DirectIF
+class UART implements SlaveIF
+UART o-- UARTLogic
+class FastMem implements SlaveIF
+class SlowMem implements SlaveIF
+enum Status {
+  TRANSFER_OK
+  TRANSFER_REQUEST
+  TRANSFER_WAIT
+  TRANSFER_ERROR
+}
+enum Operation {
+  READ
+  WRITE
+}
+enum Lock {
+  LOCK_NO
+  LOCK_SET
+  LOCK_GRANTED
+}
+struct Request {
+  Operation operation
+  int8_t *data
+  unsigned start_address
+  unsigned end_address
+  Lock lock
+  Status status
+  sc_event transfer_done
+}
+@enduml

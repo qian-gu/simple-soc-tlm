@@ -1,0 +1,37 @@
+@startuml
+component MasterDirect #Orange {
+  portout DirectPort
+}
+component MasterBlocking #Orange {
+  portout BlockingPort
+}
+component MasterNonBlocking #Orange {
+  portout NonBlockingPort
+}
+component Bus #Yellow {
+  portin Direct
+  portin Blocking
+  portin NonBlocking
+  portout SlavePort
+  portout ArbiterPort
+}
+DirectPort --> Direct
+BlockingPort --> Blocking
+NonBlockingPort --> NonBlocking
+component FastMem #Magenta {
+  portin FastSlave
+}
+component SlowMem #Magenta {
+  portin SlowSlave
+}
+component UART #Magenta {
+  portin UARTSlave
+}
+component Arbiter #Aqua {
+  portin Arbitrate
+}
+ArbiterPort --> Arbitrate
+SlavePort --> FastSlave
+SlavePort --> SlowSlave
+SlavePort --> UARTSlave
+@enduml

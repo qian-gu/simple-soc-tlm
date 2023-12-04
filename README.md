@@ -1,5 +1,12 @@
 # Simple SoC TLM
 
+Another implementation of `OSCI/examples/sysc/simple_bus`, difference with the included examples:
+
+- Implemented indepently without reference to the example codes
+- Adpoting Google C++ Coding Style Guide
+- Using byte address
+- Simplified Arbiter
+
 ## Diagram
 
 ![diagram](./docs/diagram.svg)
